@@ -1,0 +1,247 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         String   @id @default(cuid())
+  supabaseId String   @unique
+  email      String   @unique
+  name       String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  profile      Profile?
+  saved        SavedInternship[]
+  applications Application[]
+  resumes      Resume[]
+  coverLetters CoverLetter[]
+  emails       ColdEmail[]
+  watchlist    CompanyWatchlist[]
+}
+
+model Profile {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  college        String?
+  degree         String?
+  year           Int?
+  cgpa           Float?
+  city           String?
+  state          String?
+  openToRelocate Boolean  @default(false)
+  workMode       String?
+  skills         String[]
+  githubUrl      String?
+  linkedinUrl    String?
+  portfolioUrl   String?
+  bio            String?
+  achievements   String[]
+  updatedAt      DateTime @updatedAt
+
+  projects       Project[]
+  certifications Certification[]
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  profileId   String
+  profile     Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  name        String
+  description String
+  tech        String[]
+  url         String?
+  githubUrl   String?
+  createdAt   DateTime @default(now())
+}
+
+model Certification {
+  id        String    @id @default(cuid())
+  profileId String
+  profile   Profile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  name      String
+  issuer    String
+  date      DateTime?
+  url       String?
+}
+
+model Internship {
+  id             String    @id @default(cuid())
+  title          String
+  company        String
+  description    String
+  requiredSkills String[]
+  city           String?
+  state          String?
+  workMode       String
+  stipend        Float?
+  duration       String?
+  deadline       DateTime?
+  applyUrl       String
+  source         String
+  sourceId       String?
+  isActive       Boolean   @default(true)
+  postedAt       DateTime  @default(now())
+
+  saved        SavedInternship[]
+  applications Application[]
+
+  @@unique([sourceId, source])
+  @@index([city])
+  @@index([workMode])
+}
+
+model SavedInternship {
+  id           String     @id @default(cuid())
+  userId       String
+  internshipId String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  internship   Internship @relation(fields: [internshipId], references: [id], onDelete: Cascade)
+  savedAt      DateTime   @default(now())
+
+  @@unique([userId, internshipId])
+}
+
+model Company {
+  id              String    @id @default(cuid())
+  name            String
+  website         String?
+  careerPage      String?
+  linkedinUrl     String?
+  githubOrg       String?
+  industry        String?
+  size            String?
+  city            String?
+  state           String?
+  country         String    @default("India")
+  techStack       String[]
+  founderName     String?
+  hrEmail         String?
+  emailPattern    String?
+  hiringStatus    String    @default("unknown")
+  lastChecked     DateTime?
+  isStartup       Boolean   @default(true)
+  dpiitRecognized Boolean   @default(false)
+  source          String?
+  notes           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  watchlist    CompanyWatchlist[]
+  coldEmails   ColdEmail[]
+  applications Application[]
+}
+
+model CompanyWatchlist {
+  id        String   @id @default(cuid())
+  userId    String
+  companyId String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  addedAt   DateTime @default(now())
+  notes     String?
+
+  @@unique([userId, companyId])
+}
+
+model Application {
+  id            String            @id @default(cuid())
+  userId        String
+  internshipId  String?
+  companyId     String?
+  user          User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  internship    Internship?       @relation(fields: [internshipId], references: [id])
+  company       Company?          @relation(fields: [companyId], references: [id])
+  role          String
+  status        ApplicationStatus @default(SAVED)
+  appliedAt     DateTime?
+  matchScore    Float?
+  resumeId      String?
+  coverLetterId String?
+  notes         String?
+  interviewDate DateTime?
+  source        String?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+}
+
+enum ApplicationStatus {
+  SAVED
+  APPLIED
+  UNDER_REVIEW
+  SHORTLISTED
+  INTERVIEW_SCHEDULED
+  REJECTED
+  OFFER
+  WITHDRAWN
+}
+
+model Resume {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title           String
+  role            String
+  content         Json
+  atsScore        Float?
+  keywords        String[]
+  missingKeywords String[]
+  pdfUrl          String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model CoverLetter {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  company   String
+  role      String
+  content   String
+  tone      String?
+  createdAt DateTime @default(now())
+}
+
+model ColdEmail {
+  id             String      @id @default(cuid())
+  userId         String
+  companyId      String?
+  user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company        Company?    @relation(fields: [companyId], references: [id])
+  recipientName  String?
+  recipientEmail String?
+  recipientType  String
+  subject        String
+  body           String
+  status         EmailStatus @default(DRAFT)
+  sentAt         DateTime?
+  repliedAt      DateTime?
+  followUpDate   DateTime?
+  followUpSent   Boolean     @default(false)
+  notes          String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+}
+
+enum EmailStatus {
+  DRAFT
+  SENT
+  REPLIED
+  FOLLOW_UP_NEEDED
+  REJECTED
+  NO_RESPONSE
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  userId    String
+  role      String
+  content   String
+  createdAt DateTime @default(now())
+}
