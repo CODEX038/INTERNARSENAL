@@ -12,6 +12,7 @@ const navItems = [
   { label: "Cover Letter", href: "/cover-letter",         icon: "📝" },
   { label: "Cold Email",   href: "/cold-email",           icon: "✉️" },
   { label: "Applications", href: "/applications",         icon: "📋" },
+  { label: "Recruiter CRM", href: "/contacts", icon: "👥" },
   { label: "InternBot AI", href: "/internbot",            icon: "🤖" },
   { label: "Profile",      href: "/profile",              icon: "👤" },
   { label: "Settings",     href: "/settings",             icon: "⚙️" },

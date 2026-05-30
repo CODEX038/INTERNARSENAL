@@ -245,3 +245,23 @@ model ChatMessage {
   content   String
   createdAt DateTime @default(now())
 }
+model Contact {
+  id                 String    @id @default(cuid())
+  userId             String
+  companyId          String?
+  name               String
+  role               String?
+  email              String?
+  linkedinUrl        String?
+  source             String    @default("manual")
+  verificationStatus String    @default("unverified")
+  lastContactedAt    DateTime?
+  replyStatus        String    @default("no_response")
+  doNotContact       Boolean   @default(false)
+  notes              String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([email])
+}
