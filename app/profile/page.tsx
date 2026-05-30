@@ -86,13 +86,17 @@ export default function ProfilePage() {
     setProfile(prev => ({ ...prev, [key]: value }))
   }
 
-  function addSkill() {
-    const skill = newSkill.trim()
-    if (skill && !profile.skills.includes(skill)) {
-      updateProfile("skills", [...profile.skills, skill])
-      setNewSkill("")
-    }
+ function addSkill() {
+  const newSkills = newSkill
+    .split(",")
+    .map(s => s.trim())
+    .filter(s => s.length > 0 && !profile.skills.includes(s))
+  
+  if (newSkills.length > 0) {
+    updateProfile("skills", [...profile.skills, ...newSkills])
+    setNewSkill("")
   }
+}
 
   function removeSkill(skill: string) {
     updateProfile("skills", profile.skills.filter(s => s !== skill))

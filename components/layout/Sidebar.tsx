@@ -8,6 +8,7 @@ const navItems = [
   { label: "Internships",  href: "/internships",          icon: "🔍" },
   { label: "Companies",    href: "/companies",            icon: "🏢" },
   { label: "Hidden Opps",  href: "/hidden-opportunities", icon: "💎" },
+  { label: "Skills Gap", href: "/skills-gap", icon: "🎯" },
   { label: "Resume Builder", href: "/resume-builder",    icon: "📄" },
   { label: "Cover Letter", href: "/cover-letter",         icon: "📝" },
   { label: "Cold Email",   href: "/cold-email",           icon: "✉️" },
