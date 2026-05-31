@@ -7,17 +7,17 @@ import { checkRateLimit } from "@/lib/security"
 import { z } from "zod"
 
 const ResumeSchema = z.object({
-  role:        z.string().min(2).max(100),
-  jobDescription: z.string().min(20).max(5000),
-  skills:      z.array(z.string()).min(1).max(30),
-  education:   z.string().min(5).max(500),
+  role:           z.string().min(2).max(100),
+  jobDescription: z.string().min(10).max(20000),
+  skills:         z.array(z.string()).min(1).max(50),
+  education:      z.string().min(2).max(1000),
   projects: z.array(z.object({
     name:        z.string(),
     description: z.string(),
     tech:        z.array(z.string()),
     url:         z.string().optional(),
-  })).max(10),
-  achievements: z.array(z.string()).max(10).optional(),
+  })).max(30),
+  achievements: z.array(z.string()).max(30).optional(),
   name:         z.string().min(2).max(100),
   email:        z.string().email(),
   githubUrl:    z.string().optional(),
@@ -144,7 +144,7 @@ Achievements: ${data.achievements?.join(", ") ?? "None provided"}
 Generate an ATS-optimized resume for this role.
 `
 
-    // 5. Generate with GPT-4o
+    // 5. Generate with the LLM
     const resume = await generateJSON<{
       contactInfo: object
       summary: string
@@ -178,7 +178,9 @@ Generate an ATS-optimized resume for this role.
 
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.flatten() }, { status: 400 })
+      const fieldErrors = error.flatten().fieldErrors
+      const firstMsg = Object.values(fieldErrors).flat().filter(Boolean)[0] ?? "Invalid input"
+      return NextResponse.json({ error: firstMsg, fieldErrors }, { status: 400 })
     }
     console.error("Resume generation error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

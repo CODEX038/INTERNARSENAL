@@ -23,27 +23,42 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-   const [profile, dbUser] = await Promise.all([
-  prisma.profile.findUnique({
-    where:   { userId: user.id },
-    include: { projects: true, certifications: true },
-  }),
-  prisma.user.upsert({
-    where:  { supabaseId: user.id },
-    update: {},
-    create: {
-      supabaseId: user.id,
-      email:      user.email ?? "",
-      name:       user.user_metadata?.full_name ?? user.email ?? "",
-    },
-    select: { name: true, email: true },
-  }),
-])
+    const metaName =
+      user.user_metadata?.full_name ??
+      user.user_metadata?.name ??
+      null
+
+    const [profile, dbUser] = await Promise.all([
+      prisma.profile.findUnique({
+        where:   { userId: user.id },
+        include: { projects: true, certifications: true },
+      }),
+      prisma.user.upsert({
+        where:  { supabaseId: user.id },
+        update: {},
+        create: {
+          id:         user.id,
+          supabaseId: user.id,
+          email:      user.email ?? "",
+          name:       metaName ?? user.email ?? "",
+        },
+        select: { id: true, name: true, email: true },
+      }),
+    ])
+
+    // Backfill rows that were created earlier with the email as the name
+    if (metaName && (!dbUser.name || dbUser.name === dbUser.email)) {
+      await prisma.user.update({
+        where: { supabaseId: user.id },
+        data:  { name: metaName },
+      })
+      dbUser.name = metaName
+    }
 
     return NextResponse.json({
       profile: profile
-        ? { ...profile, name: dbUser?.name, email: dbUser?.email }
-        : { name: dbUser?.name, email: dbUser?.email },
+        ? { ...profile, name: dbUser.name, email: dbUser.email }
+        : { name: dbUser.name, email: dbUser.email },
     })
   } catch (error) {
     console.error("Get profile error:", error)
@@ -113,16 +128,17 @@ export async function PUT(req: NextRequest) {
 
     // Also update name in User table
     if (body.name) {
-  await prisma.user.upsert({
-    where:  { supabaseId: user.id },
-    update: { name: body.name },
-    create: {
-      supabaseId: user.id,
-      email:      user.email ?? "",
-      name:       body.name,
-    },
-  })
-}
+      await prisma.user.upsert({
+        where:  { supabaseId: user.id },
+        update: { name: body.name },
+        create: {
+          id:         user.id,
+          supabaseId: user.id,
+          email:      user.email ?? "",
+          name:       body.name,
+        },
+      })
+    }
 
     return NextResponse.json({ profile })
   } catch (error) {

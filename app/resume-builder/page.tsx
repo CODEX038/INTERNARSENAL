@@ -109,6 +109,10 @@ export default function ResumeBuilderPage() {
       })
 
       const data = await res.json()
+      if (!res.ok) {
+        setError(data.error ?? "Failed to generate resume. Try again.")
+        return
+      }
       if (data.resume) {
         setResume(data.resume)
         setStep(3)
