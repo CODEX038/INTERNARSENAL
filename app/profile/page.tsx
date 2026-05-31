@@ -7,26 +7,11 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 
-interface Profile {
-  college:        string
-  degree:         string
-  year:           number
-  cgpa:           number
-  city:           string
-  state:          string
-  workMode:       string
-  skills:         string[]
-  githubUrl:      string
-  linkedinUrl:    string
-  portfolioUrl:   string
-  bio:            string
-  openToRelocate: boolean
-}
-
 const CITIES = [
   "Mumbai", "Bengaluru", "Delhi", "Pune", "Hyderabad",
   "Chennai", "Noida", "Gurugram", "Ahmedabad", "Kolkata",
   "Kochi", "Jaipur", "Indore", "Nagpur", "Chandigarh",
+  "Thane", "Navi Mumbai", "Khopoli",
 ]
 
 export default function ProfilePage() {
@@ -35,20 +20,24 @@ export default function ProfilePage() {
   const [saved,    setSaved]    = useState(false)
   const [newSkill, setNewSkill] = useState("")
 
-  const [profile, setProfile] = useState<Profile>({
+  const [profile, setProfile] = useState({
+    name:           "",
+    email:          "",
+    phone:          "",
     college:        "",
     degree:         "",
     year:           3,
     cgpa:           0,
     city:           "",
     state:          "",
+    openToRelocate: false,
     workMode:       "any",
-    skills:         [],
+    skills:         [] as string[],
     githubUrl:      "",
     linkedinUrl:    "",
     portfolioUrl:   "",
     bio:            "",
-    openToRelocate: false,
+    achievements:   [] as string[],
   })
 
   async function fetchProfile() {
@@ -86,17 +75,16 @@ export default function ProfilePage() {
     setProfile(prev => ({ ...prev, [key]: value }))
   }
 
- function addSkill() {
-  const newSkills = newSkill
-    .split(",")
-    .map(s => s.trim())
-    .filter(s => s.length > 0 && !profile.skills.includes(s))
-  
-  if (newSkills.length > 0) {
-    updateProfile("skills", [...profile.skills, ...newSkills])
-    setNewSkill("")
+  function addSkill() {
+    const newSkills = newSkill
+      .split(",")
+      .map(s => s.trim())
+      .filter(s => s.length > 0 && !profile.skills.includes(s))
+    if (newSkills.length > 0) {
+      updateProfile("skills", [...profile.skills, ...newSkills])
+      setNewSkill("")
+    }
   }
-}
 
   function removeSkill(skill: string) {
     updateProfile("skills", profile.skills.filter(s => s !== skill))
@@ -121,29 +109,56 @@ export default function ProfilePage() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-3xl font-bold text-white mb-1">Profile</h1>
-            <p className="text-slate-400">Your information used for AI matching and resume generation</p>
+            <p className="text-slate-400">Fill once — used for resume, cover letter, cold email, skills gap</p>
           </div>
           <Button
             onClick={saveProfile}
             disabled={saving}
             className="bg-indigo-600 hover:bg-indigo-500 text-white"
           >
-            {saving ? "Saving..." : saved ? "Saved!" : "Save Profile"}
+            {saving ? "Saving..." : saved ? "✅ Saved!" : "Save Profile"}
           </Button>
         </div>
 
         <div className="space-y-6">
 
-          {/* Basic Info */}
+          {/* Personal Info */}
           <div className="bg-slate-900 border border-white/10 rounded-xl p-6">
-            <h2 className="text-white font-semibold mb-4">Basic Information</h2>
+            <h2 className="text-white font-semibold mb-4">Personal Information</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-slate-300 text-sm">Full Name</Label>
+                <Input
+                  value={profile.name}
+                  onChange={e => updateProfile("name", e.target.value)}
+                  placeholder="Shreepad Salvi"
+                  className="mt-1 bg-slate-800 border-white/10 text-white"
+                />
+              </div>
+              <div>
+                <Label className="text-slate-300 text-sm">Email</Label>
+                <Input
+                  value={profile.email}
+                  onChange={e => updateProfile("email", e.target.value)}
+                  placeholder="you@email.com"
+                  className="mt-1 bg-slate-800 border-white/10 text-white"
+                />
+              </div>
+              <div>
+                <Label className="text-slate-300 text-sm">Phone</Label>
+                <Input
+                  value={profile.phone}
+                  onChange={e => updateProfile("phone", e.target.value)}
+                  placeholder="7558674124"
+                  className="mt-1 bg-slate-800 border-white/10 text-white"
+                />
+              </div>
               <div>
                 <Label className="text-slate-300 text-sm">College</Label>
                 <Input
                   value={profile.college}
                   onChange={e => updateProfile("college", e.target.value)}
-                  placeholder="VJTI Mumbai"
+                  placeholder="Bharat College of Engineering"
                   className="mt-1 bg-slate-800 border-white/10 text-white"
                 />
               </div>
@@ -176,19 +191,17 @@ export default function ProfilePage() {
                   value={profile.cgpa}
                   onChange={e => updateProfile("cgpa", Number(e.target.value))}
                   placeholder="8.5"
-                  min={0}
-                  max={10}
-                  step={0.1}
+                  min={0} max={10} step={0.1}
                   className="mt-1 bg-slate-800 border-white/10 text-white"
                 />
               </div>
               <div className="md:col-span-2">
-                <Label className="text-slate-300 text-sm">Bio</Label>
+                <Label className="text-slate-300 text-sm">Bio / Career Objective</Label>
                 <Textarea
                   value={profile.bio}
                   onChange={e => updateProfile("bio", e.target.value)}
-                  placeholder="3rd year CS student passionate about full-stack development and AI..."
-                  className="mt-1 bg-slate-800 border-white/10 text-white h-20"
+                  placeholder="Motivated Computer Engineering student with strong interest in software development and AI, seeking internship to apply programming skills..."
+                  className="mt-1 bg-slate-800 border-white/10 text-white h-24"
                 />
               </div>
             </div>
@@ -206,9 +219,7 @@ export default function ProfilePage() {
                   className="mt-1 w-full bg-slate-800 border border-white/10 text-slate-300 rounded-lg px-3 py-2 text-sm"
                 >
                   <option value="">Select city</option>
-                  {CITIES.map(c => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
+                  {CITIES.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
               <div>
@@ -241,36 +252,25 @@ export default function ProfilePage() {
 
           {/* Skills */}
           <div className="bg-slate-900 border border-white/10 rounded-xl p-6">
-            <h2 className="text-white font-semibold mb-4">Skills</h2>
+            <h2 className="text-white font-semibold mb-1">Technical Skills</h2>
+            <p className="text-slate-500 text-xs mb-4">These are used for resume generation and skills gap analysis</p>
             <div className="flex gap-2 mb-4">
               <Input
                 value={newSkill}
                 onChange={e => setNewSkill(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && addSkill()}
-                placeholder="Add a skill (e.g. React)"
+                placeholder="Type skills separated by commas: React, Node.js, Python"
                 className="bg-slate-800 border-white/10 text-white"
               />
-              <Button
-                onClick={addSkill}
-                disabled={!newSkill.trim()}
-                className="bg-indigo-600 hover:bg-indigo-500 text-white"
-              >
+              <Button onClick={addSkill} disabled={!newSkill.trim()} className="bg-indigo-600 hover:bg-indigo-500 text-white">
                 Add
               </Button>
             </div>
             <div className="flex flex-wrap gap-2">
               {profile.skills.map(skill => (
-                <span
-                  key={skill}
-                  className="flex items-center gap-1 text-sm bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 px-3 py-1 rounded-full"
-                >
+                <span key={skill} className="flex items-center gap-1 text-sm bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 px-3 py-1 rounded-full">
                   {skill}
-                  <button
-                    onClick={() => removeSkill(skill)}
-                    className="text-indigo-400 hover:text-white ml-1"
-                  >
-                    x
-                  </button>
+                  <button onClick={() => removeSkill(skill)} className="text-indigo-400 hover:text-white ml-1">×</button>
                 </span>
               ))}
               {profile.skills.length === 0 && (
@@ -288,7 +288,7 @@ export default function ProfilePage() {
                 <Input
                   value={profile.githubUrl}
                   onChange={e => updateProfile("githubUrl", e.target.value)}
-                  placeholder="https://github.com/username"
+                  placeholder="https://github.com/CODEX038"
                   className="mt-1 bg-slate-800 border-white/10 text-white"
                 />
               </div>
@@ -297,12 +297,12 @@ export default function ProfilePage() {
                 <Input
                   value={profile.linkedinUrl}
                   onChange={e => updateProfile("linkedinUrl", e.target.value)}
-                  placeholder="https://linkedin.com/in/username"
+                  placeholder="https://linkedin.com/in/shreepad-salvi"
                   className="mt-1 bg-slate-800 border-white/10 text-white"
                 />
               </div>
               <div>
-                <Label className="text-slate-300 text-sm">Portfolio URL</Label>
+                <Label className="text-slate-300 text-sm">Portfolio URL (optional)</Label>
                 <Input
                   value={profile.portfolioUrl}
                   onChange={e => updateProfile("portfolioUrl", e.target.value)}

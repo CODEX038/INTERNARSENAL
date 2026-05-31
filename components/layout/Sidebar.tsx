@@ -11,6 +11,7 @@ const navItems = [
   { label: "Skills Gap", href: "/skills-gap", icon: "🎯" },
   { label: "Resume Builder", href: "/resume-builder",    icon: "📄" },
   { label: "Cover Letter", href: "/cover-letter",         icon: "📝" },
+  { label: "Library", href: "/library", icon: "📚" },
   { label: "Cold Email",   href: "/cold-email",           icon: "✉️" },
   { label: "Applications", href: "/applications",         icon: "📋" },
   { label: "Recruiter CRM", href: "/contacts", icon: "👥" },

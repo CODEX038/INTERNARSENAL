@@ -23,12 +23,28 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const profile = await prisma.profile.findUnique({
-      where:   { userId: user.id },
-      include: { projects: true, certifications: true },
-    })
+   const [profile, dbUser] = await Promise.all([
+  prisma.profile.findUnique({
+    where:   { userId: user.id },
+    include: { projects: true, certifications: true },
+  }),
+  prisma.user.upsert({
+    where:  { supabaseId: user.id },
+    update: {},
+    create: {
+      supabaseId: user.id,
+      email:      user.email ?? "",
+      name:       user.user_metadata?.full_name ?? user.email ?? "",
+    },
+    select: { name: true, email: true },
+  }),
+])
 
-    return NextResponse.json({ profile })
+    return NextResponse.json({
+      profile: profile
+        ? { ...profile, name: dbUser?.name, email: dbUser?.email }
+        : { name: dbUser?.name, email: dbUser?.email },
+    })
   } catch (error) {
     console.error("Get profile error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
@@ -67,7 +83,7 @@ export async function PUT(req: NextRequest) {
         city:           body.city,
         state:          body.state,
         workMode:       body.workMode,
-        skills:         body.skills,
+        skills:         body.skills ?? [],
         githubUrl:      body.githubUrl,
         linkedinUrl:    body.linkedinUrl,
         portfolioUrl:   body.portfolioUrl,
@@ -94,6 +110,19 @@ export async function PUT(req: NextRequest) {
         updatedAt:      new Date(),
       },
     })
+
+    // Also update name in User table
+    if (body.name) {
+  await prisma.user.upsert({
+    where:  { supabaseId: user.id },
+    update: { name: body.name },
+    create: {
+      supabaseId: user.id,
+      email:      user.email ?? "",
+      name:       body.name,
+    },
+  })
+}
 
     return NextResponse.json({ profile })
   } catch (error) {
